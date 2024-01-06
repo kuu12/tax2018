@@ -1,10 +1,10 @@
-<html>
+<html lang="zh-CN">
 
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>低起征点低社保 VS 高起征点高社保 计算器</title>
+    <title>理财</title>
     <style>
         label {
             display: block;
@@ -18,223 +18,66 @@
 </head>
 
 <body>
-    <label>
-        我的税前月薪：
-        <input id="salary" type="number"> 元
-    </label>
-    <label>
-        之前的社保缴交基数：
-        <input id="base" type="number" value="2000"> 元
-    </label>
-    <label>
-        新的社保缴交基数：全额月薪
-    </label>
-    <label>
-        公积金个人比例：
-        <input id="person_house_rate" type="number" value="5"> %
-    </label>
-    <label>
-        公积金公司比例：
-        <input id="corp_house_rate" type="number"> %（不填则默认和个人比例一样）
-    </label>
-    <hr />
-    <div>
-        我觉得_______算是我收入的一部分
-        <label>
-            <input type="checkbox" checked="checked" readonly disabled> 到手收入
-        </label>
-        <label>
-            <input id="part_house" type="checkbox" checked="checked" /> 住房公积金
-        </label>
-        <label>
-            <input id="part_old" type="checkbox"> 养老金个人缴交部分
-        </label>
-    </div>
-    <hr />
+    <textarea id="textarea" style="font-size: 12px;">
+现在年龄 = 35
+预期寿命 = 100
+现有存款 = 30
+年收入 = 20
+年支出 = 10
+年利率 = 0.05
+通胀率 = 0.024
+
+需工作到多少岁 = 现在年龄
+账单 = []
+do {
+    需工作到多少岁 += 1
+    余额 = 现有存款
+    账单 = []
+    for (
+        年龄 = 现在年龄,
+        支出 = 年支出;
+        年龄 < 预期寿命;
+        年龄 += 1
+    ) {
+        支出 *= 1 + 通胀率
+        余额 *= 1 + 年利率
+        余额 -= 支出
+        if (年龄 < 需工作到多少岁) {
+            余额 += 年收入
+        }
+
+        账单.push({
+            年龄,
+            支出: 支出.toFixed(2), 
+            余额: 余额.toFixed(2)
+        })
+    }
+} while (余额 < 0)
+    </textarea>
+    <br />
+    <br />
     <button id="calc">开始计算</button>
-    <hr /> 之前：
-    <label>
-        到手收入：<input id="before_income" readonly disabled>元
-    </label>
-    <label>
-        公积金（个人+公司）：<input id="before_house" readonly disabled>元
-    </label>
-    <label>
-        养老金个人部分：<input id="before_old" readonly disabled>元
-    </label>
-    <label>
-        个人所得税：<input id="before_tax" readonly disabled>元
-    </label>
-    <label>
-        公司支付：<input id="before_corp" readonly disabled>元
-    </label>
-    <hr /> 之后：
-    <label>
-        到手收入：<input id="after_income" readonly disabled>元
-    </label>
-    <label>
-        公积金（个人+公司）：<input id="after_house" readonly disabled>元
-    </label>
-    <label>
-        养老金个人部分：<input id="after_old" readonly disabled>元
-    </label>
-    <label>
-        个人所得税：<input id="after_tax" readonly disabled>元
-    </label>
-    <label>
-        公司支付：<input id="after_corp" readonly disabled>元
-    </label>
-    <hr />
-    <label>
-        我的收入变化：<input id="diff_person" readonly disabled>元
-    </label>
-    <label>
-        公司支出变化：<input id="diff_corp" readonly disabled>元
-    </label>
-    <hr />
-    <div style="font-weight:bold;">
+    <br />
+    <br />
+    <div id="result" style="font-size: 12px;">
+
+    </div>
+    <!-- <div style="font-weight:bold;">
         小广告：
         <a href="https://github.com/kuu12/less-router">
             Less-Router，一个比React Router V4更简单，更小，但功能完整的路由
         </a>
-    </div>
+    </div> -->
     <script>
-        'use strict';
-
-        function id(domId) {
-            return document.getElementById(domId);
-        }
-
-        id('calc').addEventListener('click', function (event) {
-            var salary = Number(id('salary').value);
-            var personHouseRate = Number(id('person_house_rate').value);
-            var corpHouseRate = Number(id('corp_house_rate').value) || personHouseRate;
-            var before = taxBefore(
-                salary,
-                id('base').value,
-                personHouseRate / 100,
-                corpHouseRate / 100
-            );
-            var after = taxAfter(
-                salary,
-                personHouseRate / 100,
-                corpHouseRate / 100
-            );
-            id('before_income').value = before.income;
-            id('before_house').value = before.PersonAndCorpHouse;
-            id('before_old').value = before.PersonOld;
-            id('before_tax').value = before.PersonTax;
-            id('before_corp').value = before.corp;
-            id('after_income').value = after.income;
-            id('after_house').value = after.PersonAndCorpHouse;
-            id('after_old').value = after.PersonOld;
-            id('after_tax').value = after.PersonTax;
-            id('after_corp').value = after.corp;
-
-            var beforeSum = before.income;
-            var afterSum = after.income;
-            if (id('part_house').checked) {
-                beforeSum += before.PersonAndCorpHouse;
-                afterSum += after.PersonAndCorpHouse;
-            }
-            if (id('part_old').checked) {
-                beforeSum += before.PersonOld;
-                afterSum += after.PersonOld;
-            }
-            var diff = afterSum - beforeSum;
-            id('diff_person').value = (diff > 0 ? '+' : '') + diff;
-            id('diff_corp').value = '+' + (after.corp - before.corp);
+        document.querySelector('button').addEventListener('click', () => {
+            const { value } = document.querySelector('textarea');
+            eval(value);
+            
+            window.result.innerText += JSON.stringify({ 需工作到多少岁 })
+            window.result.innerText += '\n';
+            window.result.innerText = 账单.map(JSON.stringify).join('\n');
         });
 
-        var PERSON_RATE = {
-            old: 0.08,
-            medical: 0.02
-        };
-        var CORP_RATE = {
-            old: 0.13,
-            medical: 0.1,
-            job: 0.01,
-            hurt: 0.003,
-            child: 0.008
-        };
-
-        var BEFORE_GRADE = [0, 1500, 4500, 9000, 35000, 55000, 80000, Infinity];
-        var AFTER_GRADE = [0, 3000, 12000, 25000, 35000, 55000, 80000, Infinity];
-        var RATE = [0.03, 0.10, 0.20, 0.25, 0.30, 0.45];
-
-        function personTax(GRADE, rest) {
-            if (rest <= 0) return 0;
-            var sum = 0;
-            var index = 1;
-            while (index < GRADE.length) {
-                if (rest > GRADE[index]) {
-                    sum += (GRADE[index] - GRADE[index - 1]) * RATE[index - 1];
-                } else {
-                    sum += (rest - GRADE[index - 1]) * RATE[index - 1];
-                    break;
-                }
-                index += 1;
-            }
-            return sum;
-        }
-        function personTaxBefore(rest) {
-            return personTax(BEFORE_GRADE, rest - 3500);
-        }
-        function personTaxAfter(rest) {
-            return personTax(AFTER_GRADE, rest - 5000);
-        }
-
-        function taxBefore(salary, base, personHouseRate, corpHouseRate) {
-            var PersonOld = base * PERSON_RATE.old;
-            var discount = base * (PERSON_RATE.medical + personHouseRate) + PersonOld;
-            var PersonTax = personTaxBefore(salary - discount);
-            var income = salary - discount - PersonTax;
-            var PersonAndCorpHouse = base * (personHouseRate + corpHouseRate);
-
-            var extra = base * (
-                CORP_RATE.old +
-                CORP_RATE.medical +
-                CORP_RATE.job +
-                CORP_RATE.hurt +
-                CORP_RATE.child +
-                corpHouseRate
-            );
-            var corp = salary + extra;
-
-            return {
-                income: income,
-                PersonAndCorpHouse, PersonAndCorpHouse,
-                PersonOld: PersonOld,
-                PersonTax: PersonTax,
-                corp: corp
-            };
-        }
-
-        function taxAfter(salary, personHouseRate, corpHouseRate) {
-            var PersonOld = salary * PERSON_RATE.old;
-            var discount = salary * (PERSON_RATE.medical + personHouseRate) + PersonOld;
-            var PersonTax = personTaxAfter(salary - discount);
-            var income = salary - discount - PersonTax;
-            var PersonAndCorpHouse = salary * (personHouseRate + corpHouseRate);
-
-            var extra = salary * (
-                CORP_RATE.old +
-                CORP_RATE.medical +
-                CORP_RATE.job +
-                CORP_RATE.hurt +
-                CORP_RATE.child +
-                corpHouseRate
-            );
-            var corp = salary + extra;
-
-            return {
-                income: income,
-                PersonAndCorpHouse, PersonAndCorpHouse,
-                PersonOld: PersonOld,
-                PersonTax: PersonTax,
-                corp: corp
-            };
-        }
     </script>
     <!-- Default Statcounter code for tax2018 https://kuu12.github.io/tax2018/ -->
     <script type="text/javascript">
@@ -248,6 +91,17 @@
                     alt="Web
     Analytics Made Easy - StatCounter"></a></div></noscript>
     <!-- End of Statcounter Code -->
+    <style>
+        body {
+            padding: 0;
+            font-family:"Microsoft Yahei";
+        }
+        textarea {
+            height: 80%;
+            font-family:"Microsoft Yahei";
+            width: 100%;
+        }
+    </style>
 </body>
 
 </html>
