@@ -73,9 +73,9 @@ do {
             const { value } = document.querySelector('textarea');
             eval(value);
             
-            window.result.innerText += JSON.stringify({ 需工作到多少岁 })
+            window.result.innerText = JSON.stringify({ 需工作到多少岁 })
             window.result.innerText += '\n';
-            window.result.innerText = 账单.map(JSON.stringify).join('\n');
+            window.result.innerText += 账单.map(JSON.stringify).join('\n');
         });
 
     </script>
