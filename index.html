@@ -11,8 +11,8 @@
         }
 
         body {
-            padding-top: 50px;
-            padding-bottom: 80px;
+            padding-top: 20px;
+            padding-bottom: 50px;
         }
     </style>
 </head>
@@ -27,6 +27,9 @@
 年利率 = 0.05
 通胀率 = 0.024
 工资增长率 = 0
+每年还贷 = 0
+还需还多少年 = 0
+
 
 需工作到多少岁 = 现在年龄
 账单 = []
@@ -37,7 +40,8 @@ do {
     for (
         年龄 = 现在年龄 + 1,
         支出 = 年支出,
-        工资 = 年收入;
+        工资 = 年收入,
+        贷款剩余年 = 还需还多少年;
 
         年龄 <= 预期寿命;
 
@@ -48,17 +52,20 @@ do {
         余额 *= 1 + 年利率
         余额 -= 支出
 
-        年账单 = {
-            年龄,
-            支出: 支出.toFixed(2), 
-            余额: 余额.toFixed(2),
+        年账单 = { 年龄, 支出: 支出.toFixed(1) }
+
+        if (贷款剩余年 > 0) {
+            贷款剩余年 -= 1
+            余额 -= 每年还贷
+            年账单.还贷 = 每年还贷
         }
 
         if (年龄 <= 需工作到多少岁) {
             余额 += 工资
-            年账单.工资 = 工资.toFixed(2);
+            年账单.工资 = 工资.toFixed(1)
         }
 
+        年账单.余额 = 余额.toFixed(1)
         账单.push(年账单)
     }
 } while (余额 < 0)
@@ -84,7 +91,11 @@ do {
             
             window.result.innerText = JSON.stringify({ 需工作到多少岁 })
             window.result.innerText += '\n';
-            window.result.innerText += 账单.map(JSON.stringify).join('\n');
+            window.result.innerText += 账单.map((item) => {
+                return Object.entries(item).map(([key, value]) => {
+                    return key + ':' + value
+                }).join(', ')
+            }).join('\n');
         });
 
     </script>
@@ -102,7 +113,6 @@ do {
     <!-- End of Statcounter Code -->
     <style>
         body {
-            padding: 0;
             font-family:"Microsoft Yahei";
         }
         textarea {
